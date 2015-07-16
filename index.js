@@ -132,13 +132,27 @@ var Swipeout = React.createClass({
     //  prevent scroll if moveX is true
     var moveX = Math.abs(posX) > Math.abs(posY)
     if (this.props.scroll) {
-      if (moveX) this.props.scroll(false)
-      else this.props.scroll(true)
+      var scroll_prop;
+
+      if (moveX) scroll_prop = false;
+      else scroll_prop = true;
+
+    // execute scroll property
+      this.props.scroll({
+        scrollEnabled: scroll_prop, 
+        isOpened: ((((this.state.contentPos > 0) && (this.state.contentPos >= this.state.btnsLeftWidth)) || ((this.state.contentPos < 0) && (this.state.contentPos <= this.state.btnsRightWidth))) ? true : false)
+      });
     }
+
     if (this.state.swiping) {
       //  move content to reveal swipeout
       if (posX < 0 && this.props.right) this.setState({ contentPos: Math.min(posX, 0) })
       else if (posX > 0 && this.props.left) this.setState({ contentPos: Math.max(posX, 0) })
+    }
+
+    if (this.state.swiping && (((this.state.contentPos > 0) && (this.state.contentPos >= this.state.btnsLeftWidth)) || ((this.state.contentPos < 0) && (this.state.contentPos <= this.state.btnsRightWidth)))){
+      
+      // console.log('REACHED END OF SWIPING');
     }
   }
 , _handlePanResponderEnd: function(e: Object, gestureState: Object) {
@@ -167,11 +181,11 @@ var Swipeout = React.createClass({
     }
 
     if (this.state.swiping) {
-      if (openRight && contentPos < 0 && posX < 0) {
+      if ((openRight && contentPos < 0 && posX < 0) && this.props.alwaysClose !== true) {
         // open swipeout right
         this._tweenContent('contentPos', -btnsRightWidth)
         this.setState({ contentPos: -btnsRightWidth, openedLeft: false, openedRight: true })
-      } else if (openLeft && contentPos > 0 && posX > 0) {
+      } else if ((openLeft && contentPos > 0 && posX > 0) && this.props.alwaysClose !== true) {
         // open swipeout left
         this._tweenContent('contentPos', btnsLeftWidth)
         this.setState({ contentPos: btnsLeftWidth, openedLeft: true, openedRight: false })
@@ -184,7 +198,10 @@ var Swipeout = React.createClass({
     }
 
     //  Allow scroll
-    if (this.props.scroll) this.props.scroll(true)
+    if (this.props.scroll) this.props.scroll({
+      scrollEnabled: true, 
+      isOpened: ((this.props.alwaysClose || contentPos == 0) ? false : true)
+    });
   }
 , _tweenContent: function(state, endValue) {
     this.tweenState(state, {
